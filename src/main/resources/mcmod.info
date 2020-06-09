@@ -1,0 +1,16 @@
+[
+{
+  "modid": "westerosdirewolves",
+  "name": "WesterosDirewolves",
+  "description": "Adds direwolves to Minecraft.",
+  "version": "1.12.2-1.0.0",
+  "mcversion": "${mcversion}",
+  "url": "https://westeroscraft.com/",
+  "updateUrl": "",
+  "authorList": ["he_who_is_red", "CashBanks"],
+  "credits": "Code and design by he_who_is_red. Sprites by CashBanks.",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
