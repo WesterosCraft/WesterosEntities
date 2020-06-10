@@ -1,5 +1,7 @@
 package com.westeroscraft.westerosdirewolves.commands;
 
+import com.westeroscraft.westerosdirewolves.persistence.DirewolfData;
+import com.westeroscraft.westerosdirewolves.persistence.DirewolfStorage;
 import com.westeroscraft.westerosdirewolves.entities.EntityDirewolf;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -8,17 +10,28 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
 public class CommandWCDirewolf extends CommandBase {
 
     // stores information about who owns which direwolf
-    private final HashMap<UUID, EntityDirewolf> direwolvesByPlayer;
+    public final HashMap<UUID, EntityDirewolf> direwolvesByPlayer;
+    private File dwfPersistenceFile;
+    private Logger logger;
+    private DirewolfStorage direwolfStorageHandler;
 
-    public CommandWCDirewolf() {
+    public CommandWCDirewolf(File dwfPersistenceFile, Logger logger) {
+        this.logger = logger;
+        this.dwfPersistenceFile = dwfPersistenceFile;
+        direwolfStorageHandler = new DirewolfStorage(dwfPersistenceFile, logger);
+        logger.log(Level.INFO, "CommandWCDirewolf got persistence file: " + dwfPersistenceFile.getPath());
         direwolvesByPlayer = new HashMap<UUID, EntityDirewolf>();
     }
 
@@ -81,8 +94,25 @@ public class CommandWCDirewolf extends CommandBase {
             }
 
             EntityPlayer player = (EntityPlayer) sender;
+
+            // handle direwolf persistence with JSON
+            if (params.length >= 2) {
+                DirewolfData thisData = new DirewolfData(player.getPersistentID(), coat, name);
+                direwolfStorageHandler.writeToJson(thisData);
+            }
+            if (params.length == 0) {
+                // attempt to load data
+                try {
+                    DirewolfData thisData = direwolfStorageHandler.readFromJson(player.getPersistentID());
+                    coat = thisData.coat;
+                    name = thisData.name;
+                } catch (Exception e) {
+                    // couldn't load data
+                }
+            }
+
             // clean up existing wolves
-            deleteExistingDirewolf(player.getUniqueID());
+            deleteExistingDirewolf(player.getPersistentID());
 
             // make a fun cuddly direwolf
             EntityDirewolf direwolf = new EntityDirewolf(player.getEntityWorld());
@@ -91,7 +121,7 @@ public class CommandWCDirewolf extends CommandBase {
 
             // tame the beast
             direwolf.setTamed(true);
-            direwolf.setOwnerId(player.getUniqueID());
+            direwolf.setOwnerId(player.getPersistentID());
 
             // give the wolf its coloring
             direwolf.setVariant(coat);
@@ -100,7 +130,7 @@ public class CommandWCDirewolf extends CommandBase {
             if (!name.equals("")) direwolf.setCustomNameTag(name);
 
             // add to the list
-            direwolvesByPlayer.put(player.getUniqueID(), direwolf);
+            direwolvesByPlayer.put(player.getPersistentID(), direwolf);
         }
     }
 
@@ -125,6 +155,13 @@ public class CommandWCDirewolf extends CommandBase {
         if (!(dwf == null)) {
             dwf.getEntityWorld().removeEntity(dwf);
             direwolvesByPlayer.remove(uuid);
+        }
+    }
+
+    public void cleanupDirewolves() {
+        for (Map.Entry<UUID, EntityDirewolf> entry : direwolvesByPlayer.entrySet()) {
+            entry.getValue().getEntityWorld().removeEntity(entry.getValue());
+            direwolvesByPlayer.remove(entry.getKey());
         }
     }
 
