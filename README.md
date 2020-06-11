@@ -1,7 +1,4 @@
 # WesterosEntities 1.12.2-1.1.0
-Forge-based custom wolves for WesterosCraft
+Forge-based custom entities for WesterosCraft
 
-**Known issues**
-* No permission support (Direwolves can be spawned by anyone)
-* Small chance of baby direwolves spawning, who aren't textured or sized properly
-* Deprecated method used
+Only contains direwolves for the time being
