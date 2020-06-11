@@ -1,9 +1,9 @@
 [
 {
-  "modid": "westerosentities",
-  "name": "WesterosEntities",
-  "description": "Forge-based custom entities for WesterosCraft.",
-  "version": "1.12.2-1.2.0",
+  "modid": "westerosdirewolves",
+  "name": "WesterosDirewolves",
+  "description": "Adds direwolves to Minecraft.",
+  "version": "1.12.2-1.1.0",
   "mcversion": "${mcversion}",
   "url": "https://westeroscraft.com/",
   "updateUrl": "",

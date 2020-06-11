@@ -1,4 +1,4 @@
-package com.westeroscraft.westerosentities.persistence;
+package com.westeroscraft.westerosdirewolves.persistence;
 
 import java.util.UUID;
 

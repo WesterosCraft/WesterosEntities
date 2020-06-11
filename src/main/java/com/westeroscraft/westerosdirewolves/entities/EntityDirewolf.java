@@ -1,8 +1,7 @@
-package com.westeroscraft.westerosentities.entities;
+package com.westeroscraft.westerosdirewolves.entities;
 
 import com.google.common.base.Predicate;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.IEntityLivingData;
 import net.minecraft.entity.ai.*;
 import net.minecraft.entity.monster.AbstractSkeleton;
@@ -124,14 +123,6 @@ public class EntityDirewolf extends EntityWolf {
         livingdata = super.onInitialSpawn(difficulty, livingdata);
         this.setVariant(new Random().nextInt(12));
         return livingdata;
-    }
-
-    /*
-    No children allowed
-    This fixes spawn eggs
-    */
-    public EntityWolf createChild(EntityAgeable ageable) {
-        return null;
     }
 
     // getter
