@@ -1,6 +1,6 @@
-package com.westeroscraft.westerosdirewolves;
+package com.westeroscraft.westerosentities;
 
-import com.westeroscraft.westerosdirewolves.entities.EntityDirewolf;
+import com.westeroscraft.westerosentities.entities.EntityDirewolf;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -19,7 +19,7 @@ public class ModEntities {
     public static void registerEntities(RegistryEvent.Register<EntityEntry> event) {
         DIREWOLF = EntityEntryBuilder.create()
                 .entity(EntityDirewolf.class)
-                .id(new ResourceLocation(WesterosDirewolves.MODID, "direwolf"), ID++)
+                .id(new ResourceLocation(WesterosEntities.MODID, "direwolf"), ID++)
                 .name("direwolf")
                 .tracker(64, 2, false)
                 .egg(0x7D7D7D, 0x363636)

@@ -1,7 +1,7 @@
-package com.westeroscraft.westerosdirewolves;
+package com.westeroscraft.westerosentities;
 
-import com.westeroscraft.westerosdirewolves.entities.EntityDirewolf;
-import com.westeroscraft.westerosdirewolves.renderers.RenderDirewolf;
+import com.westeroscraft.westerosentities.entities.EntityDirewolf;
+import com.westeroscraft.westerosentities.renderers.RenderDirewolf;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.relauncher.Side;
