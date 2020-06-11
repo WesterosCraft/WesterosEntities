@@ -1,4 +1,4 @@
-package com.westeroscraft.westerosdirewolves;
+package com.westeroscraft.westerosentities;
 
 public class CommonProxy {
     public void registerRenderers() {

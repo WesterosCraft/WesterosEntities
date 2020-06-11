@@ -1,4 +1,4 @@
-package com.westeroscraft.westerosdirewolves.entities;
+package com.westeroscraft.westerosentities.entities;
 
 import com.google.common.base.Predicate;
 import net.minecraft.entity.Entity;

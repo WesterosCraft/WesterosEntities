@@ -1,6 +1,6 @@
-package com.westeroscraft.westerosdirewolves;
+package com.westeroscraft.westerosentities;
 
-import com.westeroscraft.westerosdirewolves.commands.CommandWCDirewolf;
+import com.westeroscraft.westerosentities.commands.CommandWCDirewolf;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 

@@ -1,8 +1,8 @@
-package com.westeroscraft.westerosdirewolves.commands;
+package com.westeroscraft.westerosentities.commands;
 
-import com.westeroscraft.westerosdirewolves.persistence.DirewolfData;
-import com.westeroscraft.westerosdirewolves.persistence.DirewolfStorage;
-import com.westeroscraft.westerosdirewolves.entities.EntityDirewolf;
+import com.westeroscraft.westerosentities.persistence.DirewolfData;
+import com.westeroscraft.westerosentities.persistence.DirewolfStorage;
+import com.westeroscraft.westerosentities.entities.EntityDirewolf;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
