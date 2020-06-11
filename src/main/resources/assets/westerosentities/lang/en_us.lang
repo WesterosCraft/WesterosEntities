@@ -1,2 +1,4 @@
 entity.direwolf.name=Direwolf
+entity.zombiebear.name=Zombie Bear
+entity.brownbear.name=Brown Bear
 command.wcdirewolf.usage=/wcdirewolf [amber:black:blackwhite:brown:chestnut:cinnamon:grey:greywhite:mixed:tan:white:whitegrey] [name]

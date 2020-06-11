@@ -1,4 +1,4 @@
-package com.westeroscraft.westerosdirewolves.persistence;
+package com.westeroscraft.westerosentities.persistence;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
