@@ -59,8 +59,6 @@ public class WesterosEntities {
     public void serverStop(FMLServerStoppingEvent event) {
         logger.log(Level.INFO, "Deleting " + commandWCDirewolf.direwolvesByPlayer.size() + " direwolves");
         commandWCDirewolf.cleanupDirewolves();
-        logger.log(Level.INFO, "Closing Entities database connection...");
-        dbHandler.cleanUp();
     }
 
 }
