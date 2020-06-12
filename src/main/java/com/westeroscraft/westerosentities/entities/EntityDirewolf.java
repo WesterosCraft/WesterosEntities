@@ -4,6 +4,7 @@ import com.google.common.base.Predicate;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.IEntityLivingData;
+import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.*;
 import net.minecraft.entity.monster.AbstractSkeleton;
 import net.minecraft.entity.passive.EntityAnimal;
@@ -15,6 +16,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
+import net.minecraft.util.DamageSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
@@ -94,6 +96,12 @@ public class EntityDirewolf extends EntityWolf {
             }
         }));
         this.targetTasks.addTask(5, new EntityAINearestAttackableTarget(this, AbstractSkeleton.class, false));
+    }
+
+    // direwolves are invulnerable to everything
+    @Override
+    public boolean isEntityInvulnerable(DamageSource source) {
+        return true;
     }
 
     // saves the entity over restarts. we specifically need to preserve its variant variable
