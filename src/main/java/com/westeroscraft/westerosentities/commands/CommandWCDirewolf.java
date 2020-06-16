@@ -12,10 +12,8 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class CommandWCDirewolf extends CommandBase {
 
@@ -23,9 +21,34 @@ public class CommandWCDirewolf extends CommandBase {
     public final HashMap<UUID, EntityDirewolf> direwolvesByPlayer;
     private PlayerEntitiesDatabaseHandler dbHandler;
 
+    // when players attempt to do something dangerous (like resetting their direwolf), they must confirm their decision
+    // this stores information about their command pending
+    private ArrayList<PendingConfirmationCommandInfo> pendingCommands = new ArrayList<>();
+
     public CommandWCDirewolf(PlayerEntitiesDatabaseHandler dbHandler, Logger logger) {
         this.dbHandler = dbHandler;
         direwolvesByPlayer = new HashMap<UUID, EntityDirewolf>();
+    }
+
+    // remembers information about what a player was going to do before they were asked to confirm their decision
+    // we store a date so an old CommandInfo will not be called on accident (expires in 20 seconds)
+    private class PendingConfirmationCommandInfo {
+        public boolean confirmed = false;
+        public ICommandSender sender;
+        public String[] params;
+        public Date timeSent;
+        public PendingConfirmationCommandInfo(ICommandSender sender, String[] params) {
+            this.sender = sender;
+            this.params = params;
+            this.timeSent = new Date();
+        }
+        public boolean isExpired() {
+            long timeNow = new Date().getTime();
+            // if the original command was sent more than 20 seconds ago, this is expired
+            boolean expired = timeNow - timeSent.getTime() > 20000;
+            if (expired) pendingCommands.remove(this);
+            return expired;
+        }
     }
 
     @Override
@@ -38,7 +61,25 @@ public class CommandWCDirewolf extends CommandBase {
             // parse arguments
             int coat = new Random().nextInt(12);
             String name = "";
+            int growthStage = 1;
             if (params.length != 0) {
+                // if the first arg is 'confirm' we look for unexpired pending command info
+                if (params[0].equalsIgnoreCase("confirm")) {
+                    for (int i = 0; i < pendingCommands.size(); i++) {
+                        PendingConfirmationCommandInfo command = pendingCommands.get(i);
+                        if (!command.isExpired() && command.sender == sender) {
+                            // execute the command again after confirming it
+                            command.confirmed = true;
+                            sender.sendMessage(new TextComponentString(TextFormatting.BLUE + "Goodbye!"));
+                            execute(server, command.sender, command.params);
+                            pendingCommands.remove(command);
+                            return;
+                        }
+                    }
+                    // if nothing was found, there is nothing to confirm
+                    sender.sendMessage(new TextComponentString(TextFormatting.RED + "Nothing to confirm. Your previous command may have timed out."));
+                    return;
+                }
                 // parse coat preference
                 switch (params[0]) {
                     case "amber":
@@ -78,7 +119,7 @@ public class CommandWCDirewolf extends CommandBase {
                         coat = EntityDirewolf.WHITEGREY;
                         break;
                     default:
-                        sender.sendMessage(new TextComponentString(TextFormatting.RED + "Invalid coat provided; choosing randomly. Use /help wcdirewolf for a list of valid colorings."));
+                        sender.sendMessage(new TextComponentString(TextFormatting.RED + "Invalid coat provided; will choose randomly. Use /help wcdirewolf for a list of valid colorings."));
                 }
                 // parse the name, if it has been given
                 if (params.length > 1) {
@@ -89,7 +130,33 @@ public class CommandWCDirewolf extends CommandBase {
             EntityPlayer player = (EntityPlayer) sender;
 
             if (params.length >= 2) {
-                DirewolfData thisData = new DirewolfData(player.getPersistentID(), coat, name);
+                DirewolfData thisData = new DirewolfData(player.getPersistentID(), coat, name, new Date());
+                // safe to continue will be set to true if a pending command info
+                // that is confirmed and for this sender is found
+                // if it is false at the end of the loop, the sender is told to use the /wcdirewolf confirm command
+                boolean safeToContinue = false;
+                for (int i = 0; i < pendingCommands.size(); i++) {
+                    PendingConfirmationCommandInfo command = pendingCommands.get(i);
+                    if (!command.isExpired() && command.sender == sender && command.confirmed) {
+                        safeToContinue = true;
+                    }
+                }
+                if (!safeToContinue) {
+                    // the unsafe action has not been confirmed
+                    // inform the player and return. also make a new PendingConfirmationCommandInfo
+                    DirewolfData loadedData = dbHandler.getDirewolfData(player.getPersistentID());
+                    if (loadedData != null) {
+                        // this means they have a direwolf
+                        SimpleDateFormat sdf = new SimpleDateFormat("EEEEE, MMMMM dd, yyyy");
+                        String formattedDate = sdf.format(loadedData.dateCreated);
+                        sender.sendMessage(new TextComponentString(TextFormatting.RED + "You adopted " + loadedData.name + " on " + formattedDate + "."));
+                        sender.sendMessage(new TextComponentString(TextFormatting.RED + "Do you wish to release " + loadedData.name + " and adopt a new direwolf?"));
+                        sender.sendMessage(new TextComponentString(TextFormatting.RED + "" + TextFormatting.BOLD + "This action cannot be reversed!"));
+                        sender.sendMessage(new TextComponentString(TextFormatting.RED + "" + TextFormatting.BOLD + "Use /wcdirewolf confirm to continue."));
+                        pendingCommands.add(new PendingConfirmationCommandInfo(sender, params));
+                        return;
+                    }
+                }
                 dbHandler.storeDirewolfData(thisData);
             }
             if (params.length == 0) {
@@ -98,6 +165,16 @@ public class CommandWCDirewolf extends CommandBase {
                 if (loadedData != null) {
                     coat = loadedData.coat;
                     name = loadedData.name;
+                    // get the growth stage
+                    long timeNow = new Date().getTime();
+                    long difference = timeNow - loadedData.dateCreated.getTime();
+                    if (difference > EntityDirewolf.SENIOR) {
+                        growthStage = 4;
+                    } else if (difference > EntityDirewolf.ADULT) {
+                        growthStage = 3;
+                    } else if (difference > EntityDirewolf.YOUNG) {
+                        growthStage = 2;
+                    }
                 }
             }
 
@@ -115,6 +192,9 @@ public class CommandWCDirewolf extends CommandBase {
 
             // give the wolf its coloring
             direwolf.setVariant(coat);
+
+            // set the growth stage
+            direwolf.setGrowthStage(growthStage);
 
             // give it a name if one has been provided
             if (!name.equals("")) direwolf.setCustomNameTag(name);

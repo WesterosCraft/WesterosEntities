@@ -21,9 +21,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class EntityDirewolf extends EntityWolf {
+
+    // Direwolf growth stages
+    // How much time it takes to get to a certain stage, in milliseconds
+    public static final long PUP = 0L; // 0 days
+    public static final long YOUNG = 604800000L; // 7 days
+    public static final long ADULT = 1209600000L; // 14 days
+    public static final long SENIOR = 2419200000L; // 28 days
 
     // define direwolf colors
     public static final int AMBER = 0;
@@ -50,24 +57,25 @@ public class EntityDirewolf extends EntityWolf {
     public static final int TAN_ANGRY = 9 + 12;
     public static final int WHITE_ANGRY = 10 + 12;
     public static final int WHITEGREY_ANGRY = 11 + 12;
+
+    // a logger for logging purposes
     private static final Logger LOGGER = LogManager.getLogger();
+
     // this specific direwolf's color
     private static final DataParameter<Integer> DATA_VARIANT_ID = EntityDataManager.createKey(EntityDirewolf.class, DataSerializers.VARINT);
 
+    // this specific direwolf's growth stage
+    private static final DataParameter<Integer> DATA_GROWTH_STAGE = EntityDataManager.createKey(EntityDirewolf.class, DataSerializers.VARINT);
+
     public EntityDirewolf(World worldIn) {
         super(worldIn);
-
-        // this adjusts the wolf's hitbox
-        // changing how large the model itself is is done in RenderDirewolf
-        this.setSize(1.45f, 2.0f);
-        this.setHealth(40f);
     }
 
     /*
     This funky override fiddles with the follow owner AI task. Direwolves are pretty big so they don't stand as close.
     Direwolves also have no quarrel with llamas, unlike their smaller brethren.
     Most of the code here is a direct copy & paste from EntityWolf: only the EntityAIFollowOwner task has been modified.
-     */
+    */
     @Override
     protected void initEntityAI() {
         this.aiSit = new EntityAISit(this);
@@ -77,7 +85,7 @@ public class EntityDirewolf extends EntityWolf {
         this.tasks.addTask(4, new EntityAIAttackMelee(this, 1.0D, true));
 
         // this is the only task that is changed from EntityWolf
-        // this is a pretty bad way to implement this but I couldn't find a better way
+        // this is a pretty bad way to implement this but I couldn't find a better one
         this.tasks.addTask(5, new EntityAIFollowOwner(this, 1.0D, 10.0F, 5.0F));
 
         this.tasks.addTask(6, new EntityAIMate(this, 1.0D));
@@ -94,6 +102,21 @@ public class EntityDirewolf extends EntityWolf {
             }
         }));
         this.targetTasks.addTask(5, new EntityAINearestAttackableTarget(this, AbstractSkeleton.class, false));
+    }
+
+    // every time a direwolf is updated, its scale is changed based on its growth stage
+    // this is so hitboxes remain accurate to the model size
+    @Override
+    public void onUpdate() {
+        super.onUpdate();
+        setScale((getGrowthStage() / 3f) + (2f / 3f));
+    }
+
+    // this method is used while minecraft is rendering shadow sizes
+    // we pass a value that scales with a wolf's growth stage
+    @Override
+    public float getRenderSizeModifier() {
+        return (getGrowthStage() / 3f) + (2f / 3f);
     }
 
     // saves the entity over restarts. we specifically need to preserve its variant variable
@@ -114,21 +137,21 @@ public class EntityDirewolf extends EntityWolf {
     @Override
     protected void entityInit() {
         super.entityInit();
-        this.dataManager.register(DATA_VARIANT_ID, new Random().nextInt(12));
+        this.dataManager.register(DATA_VARIANT_ID, ThreadLocalRandom.current().nextInt(12));
+        this.dataManager.register(DATA_GROWTH_STAGE, ThreadLocalRandom.current().nextInt(1, 5));
     }
 
-    // a random variant is selected on initial spawn
-    // this is overwritten later if the player specifies a variant of choice in the /wcdirewolf command
+    // a random variant and growth stage is selected on initial spawn
+    // this is overwritten later if the player specifies a variant and growth stage of choice in the /wcdirewolf command
     @Nullable
     public IEntityLivingData onInitialSpawn(DifficultyInstance difficulty, @Nullable IEntityLivingData livingdata) {
         livingdata = super.onInitialSpawn(difficulty, livingdata);
-        this.setVariant(new Random().nextInt(12));
+        this.setVariant(ThreadLocalRandom.current().nextInt(12));
+        this.setGrowthStage(ThreadLocalRandom.current().nextInt(1, 5));
         return livingdata;
     }
 
-    /*
-    No kids allowed
-     */
+    // direwolves cannot produce children
     @Override
     public EntityWolf createChild(EntityAgeable e) {
         return null;
@@ -141,6 +164,16 @@ public class EntityDirewolf extends EntityWolf {
 
     // setter
     public void setVariant(int variant) {
-        dataManager.set(DATA_VARIANT_ID, Integer.valueOf(variant));
+        dataManager.set(DATA_VARIANT_ID, variant);
+    }
+
+    // getter for the growth stage
+    public int getGrowthStage() {
+        return dataManager.get(DATA_GROWTH_STAGE);
+    }
+
+    // setter for the growth stage
+    public void setGrowthStage (int growthStage) {
+        dataManager.set(DATA_GROWTH_STAGE, growthStage);
     }
 }

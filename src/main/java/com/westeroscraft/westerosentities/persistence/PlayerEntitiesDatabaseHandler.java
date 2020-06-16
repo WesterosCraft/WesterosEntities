@@ -9,7 +9,7 @@ import java.util.UUID;
 /*
 Server-side class for writing and reading player-bound entity data
 Requires a table set up like so:
-CREATE TABLE playerboundentities (PlayerUUID VARCHAR(36), DirewolfColor INT, DirewolfName TEXT, CONSTRAINT PRIMARY KEY (PlayerUUID));
+CREATE TABLE playerboundentities (PlayerUUID VARCHAR(36), DirewolfColor INT, DirewolfName TEXT, DirewolfTimeCreated TIMESTAMP, CONSTRAINT PRIMARY KEY (PlayerUUID));
  */
 public class PlayerEntitiesDatabaseHandler {
 
@@ -37,7 +37,7 @@ public class PlayerEntitiesDatabaseHandler {
      */
     public boolean storeDirewolfData(DirewolfData direwolfDataIn) {
         // declare statement and connection variables for later
-        Statement dbStatement = null;
+        PreparedStatement dbStatement = null;
         Connection dbConnection = null;
         // begin the process
         try {
@@ -45,20 +45,22 @@ public class PlayerEntitiesDatabaseHandler {
             Class.forName(JDBC_DRIVER);
             // connect to the database
             dbConnection = DriverManager.getConnection(DB_URL, USER, PASS);
-            // create the SQL statement
-            dbStatement = dbConnection.createStatement();
 
             // create the SQL query
             // we attempt to insert the direwolf data into the table. if we get a duplicate key error, we update instead
-            String sql = "INSERT INTO " + TABLE_NAME + " (PlayerUUID, DirewolfColor, DirewolfName) SELECT '"
-                    + direwolfDataIn.ownerUUID.toString()
-                    + "',"
-                    + direwolfDataIn.coat
-                    + ", '"
-                    + direwolfDataIn.name
-                    + "' ON DUPLICATE KEY UPDATE PlayerUUID = VALUES(PlayerUUID), DirewolfColor = VALUES(DirewolfColor), DirewolfName = VALUES(DirewolfName)";
-            // attempt to execute our SQL
-            dbStatement.execute(sql);
+            String sql = "INSERT INTO " + TABLE_NAME + " (PlayerUUID, DirewolfColor, DirewolfName, DirewolfTimeCreated) SELECT ?, ?, ?, ?" +
+                    " ON DUPLICATE KEY UPDATE PlayerUUID = VALUES(PlayerUUID), DirewolfColor = VALUES(DirewolfColor), DirewolfName = VALUES(DirewolfName), DirewolfTimeCreated = VALUES(DirewolfTimeCreated)";
+            // get a sql date
+            java.sql.Timestamp sqlTimestamp = new java.sql.Timestamp(direwolfDataIn.dateCreated.getTime());
+            // create the SQL statement
+            dbStatement = dbConnection.prepareStatement(sql);
+            dbStatement.setString(1, direwolfDataIn.ownerUUID.toString());
+            dbStatement.setInt(2, direwolfDataIn.coat);
+            dbStatement.setString(3, direwolfDataIn.name);
+            dbStatement.setTimestamp(4, sqlTimestamp);
+
+            // execute the statement
+            dbStatement.executeUpdate();
 
             // clean up to prevent resource leaks
             dbStatement.close();
@@ -110,21 +112,23 @@ public class PlayerEntitiesDatabaseHandler {
             // create the SQL query
             // pretty self-explanatory - we grab direwolf data from the db using the UUID as a key
             // I store UUIDs as VARCHARs in MariaDB, thus we use toString()
-            String sql = "SELECT DirewolfColor, DirewolfName FROM " + TABLE_NAME + " WHERE PlayerUUID='" + playerUUIDIn.toString() + "'";
+            String sql = "SELECT DirewolfColor, DirewolfName, DirewolfTimeCreated FROM " + TABLE_NAME + " WHERE PlayerUUID='" + playerUUIDIn.toString() + "'";
 
             // get results
             dbResultSet = dbStatement.executeQuery(sql);
             // parse data
             int coat = 404;
             String name = "Something went wrong!";
+            Date timeCreated = null;
             while(dbResultSet.next()) {
                 coat = dbResultSet.getInt("DirewolfColor");
                 name = dbResultSet.getString("DirewolfName");
+                timeCreated = new Date(dbResultSet.getTimestamp("DirewolfTimeCreated").getTime());
             }
             // construct DirewolfData object
-            DirewolfData returnDirewolfData = new DirewolfData(playerUUIDIn, coat, name);
+            DirewolfData returnDirewolfData = new DirewolfData(playerUUIDIn, coat, name, timeCreated);
             // set it to null if we have empty data for some reason
-            if (coat == 404 && name.equals("Something went wrong!")) {
+            if (coat == 404 && name.equals("Something went wrong!") && timeCreated == null) {
                 returnDirewolfData = null;
             }
 
