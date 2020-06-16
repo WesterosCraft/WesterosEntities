@@ -1,8 +1,8 @@
 package com.westeroscraft.westerosentities.commands;
 
 import com.westeroscraft.westerosentities.persistence.DirewolfData;
-import com.westeroscraft.westerosentities.persistence.DirewolfStorage;
 import com.westeroscraft.westerosentities.entities.EntityDirewolf;
+import com.westeroscraft.westerosentities.persistence.PlayerEntitiesDatabaseHandler;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -10,10 +10,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -23,15 +21,10 @@ public class CommandWCDirewolf extends CommandBase {
 
     // stores information about who owns which direwolf
     public final HashMap<UUID, EntityDirewolf> direwolvesByPlayer;
-    private File dwfPersistenceFile;
-    private Logger logger;
-    private DirewolfStorage direwolfStorageHandler;
+    private PlayerEntitiesDatabaseHandler dbHandler;
 
-    public CommandWCDirewolf(File dwfPersistenceFile, Logger logger) {
-        this.logger = logger;
-        this.dwfPersistenceFile = dwfPersistenceFile;
-        direwolfStorageHandler = new DirewolfStorage(dwfPersistenceFile, logger);
-        logger.log(Level.INFO, "CommandWCDirewolf got persistence file: " + dwfPersistenceFile.getPath());
+    public CommandWCDirewolf(PlayerEntitiesDatabaseHandler dbHandler, Logger logger) {
+        this.dbHandler = dbHandler;
         direwolvesByPlayer = new HashMap<UUID, EntityDirewolf>();
     }
 
@@ -95,19 +88,16 @@ public class CommandWCDirewolf extends CommandBase {
 
             EntityPlayer player = (EntityPlayer) sender;
 
-            // handle direwolf persistence with JSON
             if (params.length >= 2) {
                 DirewolfData thisData = new DirewolfData(player.getPersistentID(), coat, name);
-                direwolfStorageHandler.writeToJson(thisData);
+                dbHandler.storeDirewolfData(thisData);
             }
             if (params.length == 0) {
-                // attempt to load data
-                try {
-                    DirewolfData thisData = direwolfStorageHandler.readFromJson(player.getPersistentID());
-                    coat = thisData.coat;
-                    name = thisData.name;
-                } catch (Exception e) {
-                    // couldn't load data
+                DirewolfData loadedData = dbHandler.getDirewolfData(player.getPersistentID());
+                // data will be null if something went wrong or if data hasn't been recorded previously
+                if (loadedData != null) {
+                    coat = loadedData.coat;
+                    name = loadedData.name;
                 }
             }
 

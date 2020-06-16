@@ -1,6 +1,7 @@
 package com.westeroscraft.westerosentities;
 
 import com.westeroscraft.westerosentities.commands.CommandWCDirewolf;
+import com.westeroscraft.westerosentities.persistence.PlayerEntitiesDatabaseHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
@@ -19,10 +20,10 @@ import java.io.IOException;
 public class WesterosEntities {
     public static final String MODID = "westerosentities";
     public static final String NAME = "WesterosEntities";
-    public static final String VERSION = "1.12.2-1.2.0";
+    public static final String VERSION = "1.12.2-1.3.0";
 
     private static Logger logger;
-    File dwfPersistenceFile;
+    PlayerEntitiesDatabaseHandler dbHandler;
     public CommandWCDirewolf commandWCDirewolf;
 
     @SidedProxy(clientSide="com.westeroscraft.westerosentities.ClientProxy", serverSide="com.westeroscraft.westerosentities.CommonProxy")
@@ -35,13 +36,6 @@ public class WesterosEntities {
     public void preInit(FMLPreInitializationEvent event) {
         logger = event.getModLog();
         MinecraftForge.EVENT_BUS.register(ModEntities.class);
-        dwfPersistenceFile = new File(event.getModConfigurationDirectory(), "direwolves.json");
-        // create the file if it doesn't already exist
-        try {
-            dwfPersistenceFile.createNewFile();
-        } catch (IOException e) {
-            logger.log(Level.ERROR, "Unable to create direwolves.json file");
-        }
     }
 
     @EventHandler
@@ -51,13 +45,15 @@ public class WesterosEntities {
 
     @EventHandler
     public void serverInit(FMLServerStartingEvent event) {
-        commandWCDirewolf = new CommandWCDirewolf(dwfPersistenceFile, logger);
+        dbHandler = new PlayerEntitiesDatabaseHandler(logger);
+        commandWCDirewolf = new CommandWCDirewolf(dbHandler, logger);
         event.registerServerCommand(commandWCDirewolf);
         MinecraftForge.EVENT_BUS.register(new LogOffCleanup(commandWCDirewolf));
     }
 
     /*
     Cleanup direwolves when the server shuts down
+    Close the database connection
      */
     @EventHandler
     public void serverStop(FMLServerStoppingEvent event) {
