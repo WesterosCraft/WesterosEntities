@@ -4,7 +4,6 @@ import com.google.common.base.Predicate;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.IEntityLivingData;
-import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.*;
 import net.minecraft.entity.monster.AbstractSkeleton;
 import net.minecraft.entity.passive.EntityAnimal;
@@ -105,7 +104,7 @@ public class EntityDirewolf extends EntityWolf {
         }));
         this.targetTasks.addTask(5, new EntityAINearestAttackableTarget(this, AbstractSkeleton.class, false));
     }
-  
+
     // every time a direwolf is updated, its scale is changed based on its growth stage
     // this is so hitboxes remain accurate to the model size
     @Override
@@ -119,7 +118,8 @@ public class EntityDirewolf extends EntityWolf {
     @Override
     public float getRenderSizeModifier() {
         return (getGrowthStage() / 3f) + (2f / 3f);
-      
+    }
+
     // direwolves are invulnerable to everything
     @Override
     public boolean isEntityInvulnerable(DamageSource source) {
@@ -180,7 +180,7 @@ public class EntityDirewolf extends EntityWolf {
     }
 
     // setter for the growth stage
-    public void setGrowthStage (int growthStage) {
+    public void setGrowthStage(int growthStage) {
         dataManager.set(DATA_GROWTH_STAGE, growthStage);
     }
 }
