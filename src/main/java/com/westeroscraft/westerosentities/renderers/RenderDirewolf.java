@@ -40,7 +40,7 @@ public class RenderDirewolf extends RenderLiving<EntityDirewolf> {
     };
 
     public RenderDirewolf(RenderManager renderManagerIn) {
-        super(renderManagerIn, new ModelWolf(), 1.0F);
+        super(renderManagerIn, new ModelWolf(), 0.5F);
     }
 
     protected float handleRotationFloat(EntityDirewolf livingBase, float partialTicks) {
@@ -64,8 +64,12 @@ public class RenderDirewolf extends RenderLiving<EntityDirewolf> {
     }
 
     @Override
-    protected void preRenderCallback(EntityDirewolf a, float b) {
-        GL11.glScalef(2.0f, 2.0f, 2.0f);
+    protected void preRenderCallback(EntityDirewolf entityDirewolf, float b) {
+        // the size of a direwolf is influenced by its stage of growth
+        // at stage one, a direwolf is the same size as a normal wolf
+        // at stage four, a direwolf is twice as large in every dimension
+        float modifier = (entityDirewolf.getGrowthStage() / 3f) + (2f / 3f);
+        GL11.glScalef(modifier, modifier, modifier);
     }
 
 }
