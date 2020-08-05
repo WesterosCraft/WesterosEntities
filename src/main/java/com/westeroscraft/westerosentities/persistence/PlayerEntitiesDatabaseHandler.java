@@ -1,5 +1,6 @@
 package com.westeroscraft.westerosentities.persistence;
 
+import net.minecraftforge.common.config.Config;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 
@@ -17,17 +18,29 @@ public class PlayerEntitiesDatabaseHandler {
     Logger logger;
 
     // basic information about the DB & where we will look for values
-    static final String DB_NAME = "test";
-    static final String TABLE_NAME = "playerboundentities";
-    static final String JDBC_DRIVER = "org.mariadb.jdbc.Driver";
-    static final String DB_URL = "jdbc:mariadb://localhost/" + DB_NAME;
+    final String DB_NAME;
+    final String TABLE_NAME;
+    final String JDBC_DRIVER = "org.mariadb.jdbc.Driver";
+    final String DB_URL; // jdbc:mariadb://localhost/dbName
 
     // credentials for the DB. This profile should only have access to the playerboundentities table
-    static final String USER = "PlayerBoundEntitiesManipulator";
-    static final String PASS = "BARN44";
+    final String USER;
+    final String PASS;
 
-    public PlayerEntitiesDatabaseHandler(Logger logger) {
+    public PlayerEntitiesDatabaseHandler(
+            Logger logger,
+            String dbName,
+            String dbTableName,
+            String dbURL,
+            String dbUser,
+            String dbPass
+    ) {
         this.logger = logger;
+        DB_NAME = dbName;
+        TABLE_NAME = dbTableName;
+        DB_URL = dbURL;
+        USER = dbUser;
+        PASS = dbPass;
     }
 
     /*
